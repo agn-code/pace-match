@@ -1,5 +1,7 @@
 # PaceMatch — Roadmap to a Fully Functional App
 
+_Last updated 2026-04-24 (branch `discover-runner`, post-P0 internal-beta milestone)._
+
 Phased plan to ship PaceMatch as a complete runner-matchmaking product. Each
 item is sized so a single engineer can land it in a focused session. Update
 emoji status inline as work completes; don't re-paginate phases.
@@ -251,10 +253,14 @@ Today messaging is 1:1. Clubs would benefit from a member-wide thread.
 
 | Milestone        | Phases that must be done                                     | Status |
 |------------------|--------------------------------------------------------------|--------|
-| Internal beta    | P0-A · P0-B · P0-C · P0-D                                    | ✅     |
-| External beta    | + P0-E · P0-F · P1-A · P1-B · P1-C · P1-F                    | ⏳     |
+| **Internal beta** | P0-A · P0-B · P0-C · P0-D                                   | ✅ shipped 2026-04-24 |
+| External beta    | + P0-E · P0-F · P1-A · P1-B · P1-C · P1-F                    | ⏳ next |
 | Public launch    | + P1-D · P1-E · P2-A · P2-B · P2-F · P3-G                    | ⏳     |
 | Growth phase     | P3-A through P3-F                                            | ⏳     |
+
+What "Internal beta" means in practice: a new user can sign up, set a profile,
+discover other runners, request a partner, message them in real time, and host
+an invited run with push notifications. No mock data, no dead buttons.
 
 ---
 

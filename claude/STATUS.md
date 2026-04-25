@@ -1,6 +1,6 @@
 # PaceMatch — Status Ledger
 
-Snapshot as of 2026-04-24 (branch `discover-runner`).
+_Last updated 2026-04-24 (branch `discover-runner`, post-P0)._
 
 ## Legend
 - ✅ **Done** — wired end-to-end, tested in dev
@@ -10,16 +10,16 @@ Snapshot as of 2026-04-24 (branch `discover-runner`).
 
 ## At-a-glance roll-up
 
-| Area                      | Status |
-|---------------------------|--------|
-| Auth & onboarding         | ✅     |
-| Database & RLS            | ✅     |
-| Edge Functions            | 🟡     |
-| Runner-side screens       | ✅     |
-| Run-invite flow           | ✅     |
-| Connection-request flow   | ✅     |
-| Leader-side screens       | 🟡     |
-| Cross-cutting / infra     | 🟡     |
+| Area                      | Status | Where to look          |
+|---------------------------|--------|------------------------|
+| Auth & onboarding         | ✅     | §1                     |
+| Database & RLS            | ✅     | §2                     |
+| Edge Functions            | 🟡     | §3 (no match→invite fn) |
+| Runner-side screens       | ✅     | §4                     |
+| Run-invite flow           | ✅     | §5 (in-run chat is 🟡) |
+| Connection-request flow   | ✅     | §6 (push on new req ❌) |
+| Leader-side screens       | 🟡     | §7 (edit/delete + RSVP) |
+| Cross-cutting / infra     | 🟡     | §8 (tests/CI/Sentry ❌) |
 
 ---
 
@@ -65,18 +65,18 @@ Snapshot as of 2026-04-24 (branch `discover-runner`).
 
 ---
 
-## 4 · 🟡 Runner-side screens
+## 4 · ✅ Runner-side screens
 
 | Screen                       | Status | Data source           | Notes                                                                                            |
 |------------------------------|--------|-----------------------|--------------------------------------------------------------------------------------------------|
-| `(runner)/discover`          | ✅     | `useRunners` + `useClubs` | Calls `match-runners` Edge fn; supports search + goal/pace/distance filters; sends connection requests |
+| `(runner)/discover`          | ✅     | `useRunners` + `useClubs` | Calls `match-runners` Edge fn; supports search + goal/pace/distance filters; sends connection requests; "Message" button only renders for accepted connections |
 | `(runner)/ready`             | ✅     | `useReadyStatus` + `useReadyRunners` | Toggle + time window + visibility; live feed of others ready |
 | `(runner)/messages`          | ✅     | `useConnections` + `useUsersById` | Inbound requests with real names, accept/decline, "Send Message" navigates to DM thread |
 | `messages/[connection_id]`   | ✅     | `useMessages` (realtime) | Chat-bubble DM screen, composer, auto-scroll, blocked-state banner if connection not accepted |
-| `(runner)/profile`           | ✅     | `useCurrentUser`      | Edit pace, goals, distance, training type, location                                              |
+| `(runner)/profile`           | ✅     | `useCurrentUser`      | Edit pace, goals, distance, training type, location (location is free-text)                      |
 | `(runner)/filter`            | ✅     | `AsyncStorage`        | Filter chips + persistence; navigates to `runners`                                               |
-| `(runner)/runners` (hidden)  | 🟡     | `useRunners`          | List of matched runners with "Start a run" CTA — distance computed but **uses mock GPS** since `expo-location` isn't called from this screen |
-| `(runner)/start-run` (hidden)| 🟡     | `useRuns.createRun + inviteRunners` | Flow exists; reverse geocode + `react-native-maps` rendered; **doesn't actually send push notifications** to invitees |
+| `(runner)/runners` (hidden)  | ✅     | `useGetSupabase` + `expo-location` | Live GPS via `getCurrentPositionAsync`, haversine to each `users.latitude/longitude`, sortable + radius filter |
+| `(runner)/start-run` (hidden)| ✅     | `useRuns` + `expo-location` + `expo-notifications` | Reverse-geocoded meet point, creates `runs` + `run_invites`, fans out push to each invitee's `expo_push_token` |
 
 ---
 
@@ -112,13 +112,13 @@ Snapshot as of 2026-04-24 (branch `discover-runner`).
 
 | Screen                          | Status | Data source                  | Notes                                                                              |
 |---------------------------------|--------|------------------------------|------------------------------------------------------------------------------------|
-| `(leader)/dashboard`            | 🟡     | `useClub` mostly, partial mock | Next-event card + RSVP summary + quick actions                                    |
-| `(leader)/schedule`             | ⚠️     | `mockData.ts`                | "This Week" / "Coming Up" lists are still mock; training-plan is hardcoded         |
-| `(leader)/events`               | 🟡     | `useClub.createEvent`        | Create event UI works; **edit / delete event** missing; map placeholder only       |
-| `(leader)/announcements`        | 🟡     | `useClub`                    | Create + pin works; no edit / delete                                               |
-| `(leader)/safety`               | 🟡     | calls `send-emergency-alert` | Weather templates + emergency button work; **emergency-contacts list is hardcoded** |
-| `(leader)/members` (hidden)     | 🟡     | `useClub`                    | Lists members; no remove/kick UI                                                   |
-| RSVP from runner side           | ❌     | —                            | Runners have **no UI** to RSVP to club events; data model exists                   |
+| `(leader)/dashboard`            | ✅     | `useLeaderClub`              | Next-event card + member count + quick actions; create-club modal; weather-alert wired to `send-emergency-alert` |
+| `(leader)/schedule`             | 🟡     | `useLeaderClub` + hardcoded `TRAINING_PLANS` | Events grouped This Week / Coming Up come from `run_events`; the 4-week training plan is a hardcoded constant array (not mock data, but not editable) |
+| `(leader)/events`               | 🟡     | `useLeaderClub.createEvent`  | Create event UI works; **edit / delete event** missing (P1-C); map placeholder only |
+| `(leader)/announcements`        | 🟡     | `useLeaderClub`              | Create + pin works; no edit / delete (P1-C)                                        |
+| `(leader)/safety`               | 🟡     | calls `send-emergency-alert` | Weather templates + emergency button work; **emergency-contacts list is hardcoded** (P1-D) |
+| `(leader)/members` (hidden)     | 🟡     | `useLeaderClub`              | Lists members; no remove/kick UI                                                   |
+| RSVP from runner side           | ❌     | —                            | Runners have **no UI** to RSVP to club events; data model + RLS exist (P0-E)        |
 
 ---
 
@@ -131,9 +131,9 @@ Snapshot as of 2026-04-24 (branch `discover-runner`).
 | Expo Router typed routes        | ✅     | Enabled in `app.json`                                                  |
 | React Compiler                  | ✅     | Enabled in `app.json`                                                  |
 | Push notifications: register    | ✅     | `lib/notifications.ts`                                                 |
-| Push notifications: send        | 🟡     | Helpers exist; only `send-emergency-alert` actually fans out today      |
-| `expo-location` permissions     | 🟡     | Used in `start-run.tsx` only; profile location is set as a string, not GPS |
-| `react-native-maps`             | 🟡     | Rendered in `start-run.tsx`; **no Google Maps API key** in `app.json` plugin config |
+| Push notifications: send        | ✅     | `start-run.tsx` fans out per invitee; `send-emergency-alert` fans out per club. New-connection push is still ❌ (P1-F) |
+| `expo-location` permissions     | 🟡     | Live GPS in `start-run.tsx` (host) + `runners.tsx` (discovery distance). Profile `users.location` is still hand-typed text — see HANDOFF gotcha 5 (P1-A) |
+| `react-native-maps`             | 🟡     | Rendered in `start-run.tsx`; **no Google Maps API key** in `app.json` plugin config (P1-B) |
 | ESLint                          | ✅     | `eslint-config-expo`, `npm run lint`                                   |
 | Tests                           | ❌     | None yet                                                               |
 | CI                              | ❌     | None yet                                                               |
@@ -154,7 +154,8 @@ None. `app/data/mockData.ts` deleted on 2026-04-24; `grep -rn "mockData" app/ li
 ## 10 · 🟡 Component-size hot-spots (>250 lines)
 
 These exceed the 150-line guideline in `CLAUDE.md` / `PROMPT.md`. Splitting is
-optional but worthwhile for the largest:
+optional but worthwhile for the largest. Counts as of 2026-04-24 — refresh
+with `wc -l 'app/(leader)/'*.tsx 'app/(runner)/'*.tsx app/messages/*.tsx`:
 
 | File                              | Lines |
 |-----------------------------------|-------|
@@ -162,10 +163,14 @@ optional but worthwhile for the largest:
 | `app/(leader)/safety.tsx`         | 494   |
 | `app/(runner)/ready.tsx`          | 452   |
 | `app/(leader)/events.tsx`         | 353   |
+| `app/(runner)/discover.tsx`       | 345   |
+| `app/(runner)/messages.tsx`       | 339   |
 | `app/(runner)/profile.tsx`        | 334   |
-| `app/(runner)/discover.tsx`       | 324   |
-| `app/(runner)/messages.tsx`       | 319   |
-| `app/(runner)/start-run.tsx`      | 287   |
 | `app/(leader)/members.tsx`        | 288   |
-| `app/(runner)/runners.tsx`        | 277   |
+| `app/(runner)/start-run.tsx`      | 287   |
+| `app/(runner)/runners.tsx`        | 276   |
 | `app/(leader)/announcements.tsx`  | 245   |
+| `app/messages/[connection_id].tsx`| 229   |
+
+Tracked as ROADMAP P1-G — top three (`dashboard`, `safety`, `ready`) are the
+highest-leverage splits.
