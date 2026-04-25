@@ -29,6 +29,7 @@ export default function RootLayout() {
             <Stack.Screen name="(leader)" options={{ headerShown: false }} />
             <Stack.Screen name="invite/[run_id]" options={{ headerShown: false }} />
             <Stack.Screen name="run/[run_id]/accepted" options={{ headerShown: false }} />
+            <Stack.Screen name="messages/[connection_id]" />
           </Stack>
         </AppProvider>
       </ClerkProvider>

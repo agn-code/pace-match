@@ -96,19 +96,21 @@ export function RunnerCard({ user, onRequestRun, onMessage, requestSent = false 
             {requestSent ? 'Requested' : 'Request to run'}
           </Text>
         </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.btn,
-            styles.btnSecondary,
-            { borderColor: theme.border, opacity: pressed ? 0.7 : 1 },
-          ]}
-          onPress={onMessage}
-          accessibilityLabel={`Message ${user.name}`}
-          accessibilityRole="button"
-        >
-          <Ionicons name="chatbubble-outline" size={14} color={theme.brand} />
-          <Text style={[styles.btnText, { color: theme.brand }]}>Message</Text>
-        </Pressable>
+        {onMessage && (
+          <Pressable
+            style={({ pressed }) => [
+              styles.btn,
+              styles.btnSecondary,
+              { borderColor: theme.border, opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={onMessage}
+            accessibilityLabel={`Message ${user.name}`}
+            accessibilityRole="button"
+          >
+            <Ionicons name="chatbubble-outline" size={14} color={theme.brand} />
+            <Text style={[styles.btnText, { color: theme.brand }]}>Message</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   )

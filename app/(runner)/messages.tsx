@@ -1,11 +1,17 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
 import { useApp } from '../context/AppContext'
 import { useTheme } from '../hooks/useTheme'
+import { useUsersById } from '../../lib/hooks/useUsersById'
 import { spacing, radius, fontSize, fontWeight } from '../theme'
 import type { ConnectionRow } from '../../lib/database.types'
+
+function initialsOf(name: string): string {
+  return name.split(' ').map((n) => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase()
+}
 
 type Filter = 'all' | 'pending' | 'accepted'
 
@@ -24,6 +30,12 @@ export default function Messages() {
   })
 
   const pendingCount = inbound.filter((r: ConnectionRow) => r.status === 'pending').length
+
+  const senderIds = useMemo(
+    () => Array.from(new Set(filtered.map((r) => r.from_user_id))),
+    [filtered]
+  )
+  const { users: senderMap } = useUsersById(senderIds)
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['bottom']}>
@@ -64,8 +76,9 @@ export default function Messages() {
         ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
         renderItem={({ item }: { item: ConnectionRow }) => {
           const isPending = item.status === 'pending'
-          // Sender ID shown until a user-cache hook is added
-          const senderInitials = item.from_user_id.slice(0, 2).toUpperCase()
+          const sender = senderMap[item.from_user_id]
+          const displayName = sender?.name ?? 'Loading…'
+          const senderInitials = sender ? initialsOf(sender.name) : '··'
           return (
             <View
               style={[
@@ -81,8 +94,9 @@ export default function Messages() {
                   </Text>
                 </View>
                 <View style={styles.info}>
-                  <Text style={[styles.name, { color: theme.text }]}>Runner {item.from_user_id.slice(0, 6)}</Text>
+                  <Text style={[styles.name, { color: theme.text }]}>{displayName}</Text>
                   <Text style={[styles.meta, { color: theme.textSecondary }]}>
+                    {sender?.location ? `${sender.location} · ` : ''}
                     Requested {new Date(item.created_at).toLocaleDateString()}
                   </Text>
                 </View>
@@ -141,13 +155,19 @@ export default function Messages() {
                 </View>
               )}
 
-              {!isPending && (
+              {item.status === 'accepted' && (
                 <Pressable
                   style={({ pressed }) => [
                     styles.messageBtn,
                     { borderColor: theme.border, opacity: pressed ? 0.7 : 1 },
                   ]}
-                  accessibilityLabel="Send message"
+                  onPress={() =>
+                    router.push({
+                      pathname: '/messages/[connection_id]',
+                      params: { connection_id: item.id },
+                    })
+                  }
+                  accessibilityLabel={`Send message to ${displayName}`}
                   accessibilityRole="button"
                 >
                   <Ionicons name="chatbubble-outline" size={16} color={theme.brand} />

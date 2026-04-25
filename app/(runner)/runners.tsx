@@ -11,7 +11,7 @@ import { useApp } from '../context/AppContext'
 import { useGetSupabase } from '../../lib/hooks/useSupabase'
 import { useTheme } from '../hooks/useTheme'
 import { spacing, radius, fontSize, fontWeight } from '../theme'
-import type { RunFilters, RunnerProfile } from '../../types'
+import type { RunFilters, RunnerProfile, PaceBucket, Distance } from '../../types'
 import { DEFAULT_FILTERS } from '../../types'
 
 function haversinemiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -228,15 +228,14 @@ export default function AvailableRunnersScreen() {
   )
 }
 
-function paceSecondsToBucket(paceMin: number | null, paceMax: number | null) {
+function paceSecondsToBucket(paceMin: number | null, _paceMax: number | null): PaceBucket | null {
   if (!paceMin) return null
-  const avg = paceMin
-  if (avg < 480) return '7:00-8:00'
-  if (avg < 570) return '8:00-9:30'
+  if (paceMin < 480) return '7:00-8:00'
+  if (paceMin < 570) return '8:00-9:30'
   return '9:30-11:00'
 }
 
-function distanceToBucket(distMin: number | null) {
+function distanceToBucket(distMin: number | null): Distance | null {
   if (!distMin) return null
   if (distMin <= 3) return '3'
   if (distMin <= 5) return '5'

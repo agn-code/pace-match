@@ -12,6 +12,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
 import { RunnerCard } from '../components/RunnerCard'
 import { ClubCard } from '../components/ClubCard'
 import { useApp } from '../context/AppContext'
@@ -28,9 +29,18 @@ const DISTANCE_OPTIONS = ['Any', '3–5 mi', '6–8 mi', '9–12 mi', '12+ mi']
 
 export default function Discover() {
   const theme = useTheme()
-  const { dbUser, sendConnectionRequest, hasSentRequest } = useApp()
+  const { dbUser, sendConnectionRequest, hasSentRequest, connections } = useApp()
   const { runners, loading: runnersLoading, fetchMatches } = useRunners()
   const { clubs, joinedClubIds, loading: clubsLoading, joinClub, leaveClub } = useClubs(dbUser?.id)
+
+  function acceptedConnectionWith(userId: string): string | undefined {
+    return connections.find(
+      (c) =>
+        c.status === 'accepted' &&
+        ((c.from_user_id === dbUser?.id && c.to_user_id === userId) ||
+          (c.to_user_id === dbUser?.id && c.from_user_id === userId))
+    )?.id
+  }
 
   const [activeTab, setActiveTab] = useState<Tab>('runners')
   const [query, setQuery] = useState('')
@@ -156,14 +166,25 @@ export default function Discover() {
         <FlatList
           data={filteredRunners}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <RunnerCard
-              user={item}
-              requestSent={hasSentRequest(item.id)}
-              onRequestRun={() => sendConnectionRequest(item.id)}
-              onMessage={() => {}}
-            />
-          )}
+          renderItem={({ item }) => {
+            const connectionId = acceptedConnectionWith(item.id)
+            return (
+              <RunnerCard
+                user={item}
+                requestSent={hasSentRequest(item.id)}
+                onRequestRun={() => sendConnectionRequest(item.id)}
+                onMessage={
+                  connectionId
+                    ? () =>
+                        router.push({
+                          pathname: '/messages/[connection_id]',
+                          params: { connection_id: connectionId },
+                        })
+                    : undefined
+                }
+              />
+            )
+          }}
           ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
